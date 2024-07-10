@@ -18,7 +18,8 @@ This page contains notes primarily from Adrian Cantrill’s [AWS Solutions Archi
 Account **root user** has full control over all of the AWS account and any resources created within in. The root user can’t be restricted. 
 
 IAM **User Groups** and **Roles** can also be created and given full or limited permissions. All identities start with no permissions. 
-
+- it is only for users
+-
 May be good practice to create multiple AWS Accounts for different uses (prod, dev, test).
 
 
@@ -50,6 +51,10 @@ May be good practice to create multiple AWS Accounts for different uses (prod, d
 - **Identity federation and MFA**
     - Use Facebook, Twitter, Google etc. to access AWS resources
 
+## IAM AUDIT tools: 
+- IAM credentials report(account): list and status of your accounts can be Download
+- IAM access advisor report(user): check services permissions revise your policies
+- 
 ## IAM Access Keys
 
 - Long-term credentials
@@ -339,15 +344,26 @@ Provide access to VMs known as instances*
 - Different instance sizes and capabilities
 - On-Demand Billing - **Per second**
 - Local on-host storage or **Elastic Block Store (EBS)**
-- Instance composition: CPU, memory, disk and networking. All four are billed when running. ❗
+- Instance composition: CPU, memory, disk, and networking. All four are billed when running. ❗
     - Only disk storage is billed when stopped (EBS).
+- Key pairs: SSH port 22
+- User Data: Scripts for running at the beginning with sudo privilege
 
 ### Instance Lifecycle
 
 - Running
-- Stopped
+- Stopped: Stop is not billing and the storage stay
+	- only change the public IP when it start again 
 - Terminated
-
+### EC2 types:
+- Naming :
+	- m: instance class
+ 	- 5: Generation
+    	- 2xlarge: size
+- General purpose: balanced T families
+- Compute optimized: high perfomance task C families
+- Memory optimized: large data in memory R families
+- Stored Optimized: read and write large data Databases. I or D
 ### Amazon Machine Image (AMI)
 
 - An EC2 instance can be created from an AMI, or an EC2 can be used to create an AMI
@@ -369,7 +385,70 @@ Provide access to VMs known as instances*
     - Protocol Port 3389
 - Linux: SSH protocol
     - Port 22
+    - read only permission: chmod 0400
+- Connect with EC2 instance connect
+- Take care of the user. ec2-user,ubuntu, etc
 
+#### Ec2 roles Demo
+action/security/iam-role 
+#### SSH Troubleshooting
+
+
+1) There's a connection timeout
+
+This is a security group issue. Any timeout (not just for SSH) is related to security groups or a firewall. Ensure your security group looks like this and correctly assigned to your EC2 instance.
+
+
+2) There's still a connection timeout issue
+
+If your security group is properly configured as above, and you still have connection timeout issues, then that means a corporate firewall or a personal firewall is blocking the connection. Please use EC2 Instance Connect as described in the next lecture.
+
+
+
+3) SSH does not work on Windows
+
+If it says: ssh command not found, that means you have to use Putty
+
+Follow again the video. If things don't work, please use EC2 Instance Connect as described in the next lecture
+
+
+
+4) There's a connection refused
+
+This means the instance is reachable, but no SSH utility is running on the instance
+
+Try to restart the instance
+
+If it doesn't work, terminate the instance and create a new one. Make sure you're using Amazon Linux 2
+
+
+
+5)  Permission denied (publickey,gssapi-keyex,gssapi-with-mic)
+
+This means either two things:
+
+You are using the wrong security key or not using a security key. Please look at your EC2 instance configuration to make sure you have assigned the correct key to it.
+
+You are using the wrong user. Make sure you have started an Amazon Linux 2 EC2 instance, and make sure you're using the user ec2-user. This is something you specify when doing ec2-user@<public-ip> (ex: ec2-user@35.180.242.162) in your SSH command or your Putty configuration
+
+
+
+6) Nothing is working - "aaaahhhhhh"
+
+Don't panic. Use EC2 Instance Connect from the next lecture. Make sure you started an Amazon Linux 2 and you will be able to follow along with the tutorial :)
+
+
+
+7) I was able to connect yesterday, but today I can't
+
+This is probably because you have stopped your EC2 instance and then started it again today. When you do so, the public IP of your EC2 instance will change. Therefore, in your command, or Putty configuration, please make sure to edit and save the new public IP.
+
+
+
+
+
+Happy troubleshooting!
+Stephane
 ## Simple Storage Service (S3) Basics
 
 - Global Storage Platform - regional based/resilient
@@ -1698,6 +1777,13 @@ Every subnet has an associated NACL
 - A NACL can be associated with **MANY Subnet**
 
 ## VPC Security Groups (SG)
+-Acting as "firewalll on EC2
+- Maintain one separate SG for SSH
+- • If your application is not accessible (time out), then it’s a security group issue
+• If your application gives a “connection refused“ error, then it’s an application error or it’s not launched
+• All inbound traffic is blocked by default
+• All outbound traffic is authorized by default
+- Protocols and ports: 22,21,22,80,443,3389 
 
 > *Security Groups (SGs) are another security feature of AWS VPC ... only unlike NACLs they are attached to AWS resources, not VPC subnets.*
 > 
